@@ -11,38 +11,37 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
-data_train = pd.read_csv('C:/Users/emers/OneDrive/Documentos/Supervisioned-Regression-Machine-Learning-main/data/train.csv')
-data_test = pd.read_csv('C:/Users/emers/OneDrive/Documentos/Supervisioned-Regression-Machine-Learning-main/data/test.csv')
+data = pd.read_csv('C:/Users/emers/OneDrive/Documentos/Supervisioned-Regression-Machine-Learning-main/data/data.csv')
 
-data_train.columns
+data.columns
 
 #other variables: Street, LotShape, ExterQual, CentralAir
 variables = ['LotFrontage', 'LotArea', 'YearBuilt', 'OverallQual', 'OverallCond', 'YearRemodAdd', 'MasVnrArea', '1stFlrSF', '2ndFlrSF', 'GrLivArea', 'FullBath', 'BedroomAbvGr', 'KitchenAbvGr', 'TotRmsAbvGrd', 'GarageArea', 'PoolArea']
 
 ### only variables that is important in first moment ###
-data_train_X = data_train[variables]
-data_train_Y = data_train['SalePrice']
+data_X = data[variables]
+data_Y = data['SalePrice']
 
 #data_train_X.shape
 
 ### isna ###
-na_columns = data_train_X.isna().sum()
+na_columns = data_X.isna().sum()
 na_columns = na_columns[na_columns > 0]
 na_columns
-data_train_Y.isna().sum()
+data_Y.isna().sum()
 
-data_train_X = data_train_X.drop(na_columns.index[0], axis = 1)
-data_train_X = data_train_X.fillna(data_train_X.mean())
+data_X = data_X.drop(na_columns.index[0], axis = 1)
+data_X = data_X.fillna(data_X.mean())
 
-#data_train_X.shape
-#data_train_X.isna().sum()
+#data_X.shape
+#data_X.isna().sum()
 
-data_train_X.describe()
-data_train_X.dtypes
+data_X.describe()
+data_X.dtypes
 
 #### machine learning ####
 
-X_train, X_test, y_train, y_test = train_test_split(data_train_X, data_train_Y, test_size = 0.3, random_state = 1)
+X_train, X_test, y_train, y_test = train_test_split(data_X, data_Y, test_size = 0.3, random_state = 1)
 
 #model 1
 model1 = LinearRegression()
@@ -62,3 +61,7 @@ mse2 = mean_squared_error(y_test, prediction2)
 r2_2 = r2_score(y_test, prediction2)
 print('Second model result mse:', mse2)
 print('Second model result r2:', r2_2)
+
+#model for production from best model
+final_model = RandomForestRegressor(n_estimators=100, random_state=1)
+final_model.fit(data_X, data_Y)
