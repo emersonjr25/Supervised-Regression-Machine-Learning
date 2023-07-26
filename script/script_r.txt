@@ -1,0 +1,99 @@
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(zoo)
+library(xgboost)
+library(tidyverse)
+library(randomForest)
+
+dados <- read.csv("C:/Users/emers/OneDrive/Documentos/Supervisioned-Regression-Machine-Learning-main/data/data.csv")
+colnames(dados)
+set.seed(1)
+#other variables: Street, LotShape, ExterQual, CentralAir
+variables <- c('LotFrontage', 'LotArea', 'YearBuilt', 'OverallQual', 'OverallCond', 'YearRemodAdd', 'MasVnrArea', 'X1stFlrSF', 'X2ndFlrSF', 'GrLivArea', 'FullBath', 'BedroomAbvGr', 'KitchenAbvGr', 'TotRmsAbvGrd', 'GarageArea', 'PoolArea')
+
+### only variables that is important in first moment ###
+data_X <- dados[, variables]
+data_y <- dados[, 'SalePrice']
+
+summary(data_X)
+dim(data_X)
+
+lista <- list()
+colnames(data_X[i])
+### isna ###
+na_columns <- colSums(is.na(data_X))
+na_columns <- na_columns[na_columns > 0]
+na_columns
+
+sum(is.na(data_y))
+
+data_X2 <- data_X %>%
+  select(-names(na_columns)[1])
+
+na_Data_X2 <- data_X2[names(na_columns)[2]]
+mean_fill <- mean(na_Data_X2[!is.na(na_Data_X2)])
+
+data_X2[names(na_columns)[2]] <- na.fill(data_X2[names(na_columns)[2]], fill = mean_fill)
+
+#dim(data_X2)
+#sum(is.na(data_X2))
+
+str(data_X2)
+summary(data_X2)
+View(cor(data_X2))
+
+### machine learning ###
+index_train <- createDataPartition(data_y, p = 0.7, list = FALSE)
+
+X_train <- data_X2[index_train, ]
+y_train <- data_y[index_train]
+
+X_test <- data_X2[-index_train, ]
+y_test <- data_y[-index_train]
+
+#dim(X_train)
+#dim(X_test)
+#length(y_train)
+#length(y_test)
+
+### model 1 ###
+model1 <- lm(y_train ~ ., data = X_train)
+prediction1 <- predict(model1, X_test)
+mae1 <- mean(abs(y_test - prediction1))
+r2_1 <- summary(lm(y_test ~ prediction1))$r.squared
+
+### model 2 ###
+
+tree <- c(10, 50, 100, 150, 200, 300, 500, 1000, 3000)
+best_model <- rep(0, length(tree))
+for(i in 1:length(tree)){
+  model2 <- randomForest(y_train ~ ., data = X_train, ntree = tree[i])
+  prediction2 <- predict(model2, X_test)
+  mae2 <- mean(abs(y_test - prediction2))
+  r2_2 <- summary(lm(y_test ~ prediction2))$r.squared
+  best_model[i] <- mae2
+}
+
+model2 <- randomForest(y_train ~ ., data = X_train, ntree = 1000)
+prediction2 <- predict(model2, X_test)
+mae2 <- mean(abs(y_test - prediction2))
+r2_2 <- summary(lm(y_test ~ prediction2))$r.squared
+
+### model 3 ###
+model3 <- rpart(y_train ~ ., data = X_train)
+prediction3 <- predict(model3, X_test)
+mae3 <- mean(abs(y_test - prediction3))
+r2_3 <- summary(lm(y_test ~ prediction3))$r.squared
+rpart.plot(model3)
+
+### model 4 ####
+xg_train <- xgb.DMatrix(data=as.matrix(X_train), label=as.numeric(y_train))
+model4 <- xgboost(data=xg_train, nrounds=100)
+prediction4 <- predict(model4, as.matrix(X_test))
+mae4 <- mean(abs(y_test - prediction4))
+r2_4 <- summary(lm(y_test ~ prediction4))$r.squared
+
+### best model ###
+best_model <- randomForest(data_y ~ ., data = data_X2, ntree=3000)
+#saveRDS(best_model, 'best_model.rds')
