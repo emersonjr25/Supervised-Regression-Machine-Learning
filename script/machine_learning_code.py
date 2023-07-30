@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
 import pickle
+import joblib
 
 data = pd.read_csv('data/data.csv')
 
@@ -99,5 +100,8 @@ final_model = GradientBoostingRegressor(n_estimators=100, max_depth=5)
 final_model.fit(data_X, data_Y)
 data_X.describe()
 
+
 with open('model_house.pkl', 'wb') as file:
     pickle.dump(final_model, file)
+
+joblib.dump(final_model, 'house_model.joblib')
